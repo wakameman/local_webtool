@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <title>Stable JSON Stringify</title>
+<!DOCTYPE html>
+<html>
+  <meta name="google" content="notranslate">
+<head>
+  <meta charset="UTF-8">
+  <title>整形JSON表示</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    textarea { width: 100%; height: 150px; }
+    pre {
+      background: #f0f0f0;
+      padding: 10px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  </style>
+</head>
+  <script>
+    function stableStringifyParsed(obj,order) {
+      if (obj === null || typeof obj !== 'object') return obj;
+      if (Array.isArray(obj)) return obj.map(stableStringifyParsed);
+
+      const sorted = {};
+      if (order) {
+        Object.keys(obj).sort().forEach(key => {
+          sorted[key] = stableStringifyParsed(obj[key]);    
+        });
+      }else{
+        Object.keys(obj).sort().reverse().forEach(key => {
+          sorted[key] = stableStringifyParsed(obj[key]);    
+        });
+      }
+      return sorted;
+    }
+
+    function stableStringify(jsonStr,order) {
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const sorted = stableStringifyParsed(parsed, order);
+        return JSON.stringify(sorted, null, 2); // インデント付き
+      } catch (e) {
+        return "⚠️ JSON パースエラー: " + e;
+      }
+    }
+
+    function SortJsonStringify(order) {
+      const input = document.getElementById('input').value;
+      const output = stableStringify(input,order);
+      document.getElementById('output').textContent = output;
+    }
+    function simpleStringify(){
+      try {
+      const input = document.getElementById('input').value;
+        const parsed = JSON.parse(input);
+    	  document.getElementById('output').textContent = JSON.stringify(parsed,null,2);
+      }catch(e){
+        return "⚠️ JSON パースエラー: " + e;
+      }
+    }
+  </script>
+<body>
+<textarea id="input" placeholder="ここにJSONを入力してください"></textarea>
+
+  <br>
+  <button onclick="simpleStringify()">単純整形</button>
+  <button onclick="SortJsonStringify(true)">正順整形(正順)</button>
+    <button onclick="SortJsonStringify(false)">逆順整形(逆順)</button>
+  <pre id="output"></pre>
+</body>
+</html>
