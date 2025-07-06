@@ -6,9 +6,9 @@
 </div>
 
 <button id="downloadBtn" disabled>Download Sorted File</button>
-
-<div id="report" style="margin-top: 1em; white-space: pre-wrap; font-family: monospace;"></div>
-<script>
+<br />
+<label for="report" style="font-weight: bold;">RESULT</label><br />
+<textarea id="report" readonly style="width:100%; height:150px; font-family: monospace; white-space: pre-wrap;"></textarea><script>
     let sortedResult = "";
 
     function deepSortKeys(obj, order = "asc") {
@@ -63,17 +63,18 @@
             document.getElementById("downloadBtn").disabled = false;
 
             // 結果表示
-            const report = [
+            const reportText  = [
                 `Total lines       : ${total}`,
                 `Parsed successfully: ${successCount}`,
                 `Parse errors       : ${errorCount}`,
                 errorCount > 0 ? "\nError lines:" : "",
                 ...errorLines,
                 "",
-                "Press the download button to save the sorted result."
+                "Press the \"Download Sorted File\" to save the sorted result."
             ].join("\n");
 
-            document.getElementById("report").textContent = report;
+            document.getElementById("report").innerHTML =
+                reportText;
         };
 
         reader.readAsText(file);
@@ -82,10 +83,9 @@
     document.getElementById("downloadBtn").addEventListener("click", function () {
         const blob = new Blob([sortedResult], { type: "application/json" });
         const url = URL.createObjectURL(blob);
-
         const link = document.createElement("a");
         link.href = url;
-        link.download = "sorted.json";
+        link.download = getSortOrder() == "asc" ? "asc_sorted.json" : "desc_sorted.json";
         link.click();
 
         URL.revokeObjectURL(url);
