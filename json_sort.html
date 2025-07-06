@@ -1,0 +1,93 @@
+<input type="file" id="fileInput" accept=".json,application/json" />
+
+<div>
+    <label><input type="radio" name="sortOrder" value="asc" checked> Ascending</label>
+    <label><input type="radio" name="sortOrder" value="desc"> Descending</label>
+</div>
+
+<button id="downloadBtn" disabled>Download Sorted File</button>
+
+<div id="report" style="margin-top: 1em; white-space: pre-wrap; font-family: monospace;"></div>
+<script>
+    let sortedResult = "";
+
+    function deepSortKeys(obj, order = "asc") {
+        if (Array.isArray(obj)) {
+            return obj.map(item => deepSortKeys(item, order));
+        } else if (obj !== null && typeof obj === "object") {
+            const sorted = {};
+            const keys = Object.keys(obj).sort((a, b) =>
+                order === "asc" ? a.localeCompare(b) : b.localeCompare(a)
+            );
+            keys.forEach(key => {
+                sorted[key] = deepSortKeys(obj[key], order);
+            });
+            return sorted;
+        } else {
+            return obj;
+        }
+    }
+
+    function getSortOrder() {
+        const selected = document.querySelector('input[name="sortOrder"]:checked');
+        return selected ? selected.value : "asc";
+    }
+
+    document.getElementById("fileInput").addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function (event) {
+            const order = getSortOrder();
+            const lines = event.target.result.split("\n").filter(line => line.trim() !== "");
+
+            const total = lines.length;
+            let successCount = 0;
+            let errorCount = 0;
+            const errorLines = [];
+
+            const sortedLines = lines.map((line, index) => {
+                try {
+                    const obj = JSON.parse(line);
+                    const sortedObj = deepSortKeys(obj, order);
+                    successCount++;
+                    return JSON.stringify(sortedObj);
+                } catch (e) {
+                    errorCount++;
+                    errorLines.push(`行 ${index + 1}: ${line}`);
+                    return line;
+                }
+            });
+
+            sortedResult = sortedLines.join("\n");
+            document.getElementById("downloadBtn").disabled = false;
+
+            // 結果表示
+            const report = [
+                `Total lines       : ${total}`,
+                `Parsed successfully: ${successCount}`,
+                `Parse errors       : ${errorCount}`,
+                errorCount > 0 ? "\nError lines:" : "",
+                ...errorLines,
+                "",
+                "Press the download button to save the sorted result."
+            ].join("\n");
+
+            document.getElementById("report").textContent = report;
+        };
+
+        reader.readAsText(file);
+    });
+    //click donwload
+    document.getElementById("downloadBtn").addEventListener("click", function () {
+        const blob = new Blob([sortedResult], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "sorted.json";
+        link.click();
+
+        URL.revokeObjectURL(url);
+    });
+</script>
