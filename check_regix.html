@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>正規表現チェックツール</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    textarea, input, button { width: 100%; margin-top: 1em; padding: 0.5em; font-size: 1em; }
+    .result { white-space: pre-wrap; background: #f0f0f0; padding: 1em; margin-top: 1em; }
+    .error { color: red; }
+    .match { background-color: yellow; }
+  </style>
+</head>
+<body>
+  <h1>正規表現チェックツール</h1>
+
+  <label for="pattern">正規表現パターン:</label>
+  <input type="text" id="pattern" placeholder="例: \\d+" />
+
+  <label for="flags">フラグ (例: g, i, m):</label>
+  <input type="text" id="flags" placeholder="例: g" />
+  <details>
+    <summary>フラグの意味を表示</summary>
+    <ul>
+      <li><strong>g</strong> – global（全体検索。複数のマッチを取得）</li>
+      <li><strong>i</strong> – ignoreCase（大文字と小文字を区別しない）</li>
+      <li><strong>m</strong> – multiline（^ と $ が各行の行頭・行末にもマッチ）</li>
+      <li><strong>s</strong> – dotAll（. が改行文字にもマッチ）</li>
+      <li><strong>u</strong> – unicode（Unicodeコードポイントとして扱う）</li>
+      <li><strong>y</strong> – sticky（lastIndexからのみマッチを探す）</li>
+    </ul>
+  </details>
+  <label for="inputText">対象文字列:</label>
+  <textarea id="inputText" rows="6" placeholder="ここにチェックしたい文字列を入力してください"></textarea>
+
+  <button onclick="checkRegex()">チェック</button>
+
+  <div id="result" class="result"></div>
+
+  <script>
+    function checkRegex() {
+      const pattern = document.getElementById("pattern").value;
+      const flags = document.getElementById("flags").value;
+      const input = document.getElementById("inputText").value;
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "";
+
+      let regex;
+      try {
+        regex = new RegExp(pattern, flags);
+      } catch (e) {
+        resultDiv.innerHTML = `<div class="error">正規表現エラー: ${e.message}</div>`;
+        return;
+      }
+
+      if (!regex.test(input)) {
+        resultDiv.innerHTML = "マッチしません。";
+        return;
+      }
+
+      const matches = [...input.matchAll(regex)];
+      let highlighted = input;
+      let offset = 0;
+
+      for (const match of matches) {
+        const start = match.index + offset;
+        const end = start + match[0].length;
+        const before = highlighted.slice(0, start);
+        const matchText = `<span class="match">${highlighted.slice(start, end)}</span>`;
+        const after = highlighted.slice(end);
+        highlighted = before + matchText + after;
+        offset += matchText.length - match[0].length;
+      }
+
+      resultDiv.innerHTML = `<div>マッチした箇所:</div><div>${highlighted}</div>`;
+    }
+  </script>
+</body>
+</html>
